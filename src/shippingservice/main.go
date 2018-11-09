@@ -22,6 +22,7 @@ import (
 
 	"cloud.google.com/go/profiler"
 	"contrib.go.opencensus.io/exporter/stackdriver"
+	"github.com/Datadog/opencensus-go-exporter-datadog"
 	"github.com/sirupsen/logrus"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
@@ -128,8 +129,9 @@ func (s *server) ShipOrder(ctx context.Context, in *pb.ShipOrderRequest) (*pb.Sh
 	}, nil
 }
 
-func initStats(exporter *stackdriver.Exporter) {
+func initStats(exporter *stackdriver.Exporter, dd *datadog.Exporter) {
 	view.RegisterExporter(exporter)
+	view.RegisterExporter(dd)
 	if err := view.Register(ocgrpc.DefaultServerViews...); err != nil {
 		log.Warn("Error registering default server views")
 	} else {
@@ -140,17 +142,23 @@ func initStats(exporter *stackdriver.Exporter) {
 func initTracing() {
 	// TODO(ahmetb) this method is duplicated in other microservices using Go
 	// since they are not sharing packages.
+	ddTraceAddr := "datadog-service:8126"
+	ddApmAddr := "datadog-service:8125"
+
 	for i := 1; i <= 3; i++ {
 		exporter, err := stackdriver.NewExporter(stackdriver.Options{})
+		dd := datadog.NewExporter(datadog.Options{TraceAddr: ddTraceAddr, StatsAddr: ddApmAddr, Service: "shippingservice"})
+
 		if err != nil {
 			log.Warnf("failed to initialize stackdriver exporter: %+v", err)
 		} else {
 			trace.RegisterExporter(exporter)
+			trace.RegisterExporter(dd)
 			trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 			log.Info("registered stackdriver tracing")
 
 			// Register the views to collect server stats.
-			initStats(exporter)
+			initStats(exporter, dd)
 			return
 		}
 		d := time.Second * 10 * time.Duration(i)

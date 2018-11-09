@@ -29,3 +29,5 @@ six==1.11.0
 uritemplate==3.0.0
 urllib3==1.23
 virtualenv==16.0.0
+ddtrace==0.15.0
+opentracing==2.0.0

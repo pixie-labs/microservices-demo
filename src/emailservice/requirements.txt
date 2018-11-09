@@ -5,6 +5,7 @@ cffi==1.11.5
 chardet==3.0.4
 configparser==3.5.0
 cryptography==2.3.1
+ddtrace==0.15.0
 entrypoints==0.2.3
 enum34==1.1.6
 futures==3.1.1
@@ -40,3 +41,4 @@ rsa==4.0
 SecretStorage==3.1.0
 six==1.11.0
 urllib3==1.23
+opentracing==2.0.0

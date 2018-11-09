@@ -50,6 +50,9 @@ from grpc_health.v1 import health_pb2_grpc
 # except:
 #     pass
 
+import opentracing
+from ddtrace.opentracer import Tracer, set_global_tracer
+
 from logger import getJSONLogger
 logger = getJSONLogger('emailservice-server')
 
@@ -67,11 +70,13 @@ class BaseEmailService(demo_pb2_grpc.EmailServiceServicer):
 
 class EmailService(BaseEmailService):
   def __init__(self):
+    init_tracer('emailservice')
     raise Exception('cloud mail client not implemented')
     super().__init__()
 
   @staticmethod
   def send_email(client, email_address, content):
+    span = opentracing.tracer.start_span('send_email')
     response = client.send_message(
       sender = client.sender_path(project_id, region, sender_id),
       envelope_from_authority = '',
@@ -88,12 +93,13 @@ class EmailService(BaseEmailService):
         "html_body": content
       }
     )
+    span.finish()
     logger.info("Message sent: {}".format(response.rfc822_message_id))
 
   def SendOrderConfirmation(self, request, context):
     email = request.email
     order = request.order
-
+    span = opentracing.tracer.start_span('send_order_confirmation')
     try:
       confirmation = template.render(order = order)
     except TemplateError as err:
@@ -109,18 +115,39 @@ class EmailService(BaseEmailService):
       print(err.message)
       context.set_code(grpc.StatusCode.INTERNAL)
       return demo_pb2.Empty()
-
+    span.finish()
     return demo_pb2.Empty()
 
 class DummyEmailService(BaseEmailService):
+  def __init__(self):
+    init_tracer('emailservice')
+    super().__init__()
+
   def SendOrderConfirmation(self, request, context):
+    span = opentracing.tracer.start_span('send_order_confirmation')
     logger.info('A request to send order confirmation email to {} has been received.'.format(request.email))
+    span.finish()
     return demo_pb2.Empty()
 
 class HealthCheck():
   def Check(self, request, context):
     return health_pb2.HealthCheckResponse(
       status=health_pb2.HealthCheckResponse.SERVING)
+
+def init_tracer(service_name):
+    """
+    Initialize a new Datadog opentracer and set it as the
+    global tracer.
+
+    This overwrites the opentracing.tracer reference.
+    """
+    config = {
+      'agent_hostname': 'datadog-service',
+      'agent_port': 8126,
+    }
+    tracer = Tracer(service_name, config=config)
+    set_global_tracer(tracer)
+    return tracer
 
 def start(dummy_mode):
   server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))#, interceptors=(tracer_interceptor,))

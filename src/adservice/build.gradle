@@ -17,6 +17,9 @@ apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 
+apply plugin: 'application'
+applicationDefaultJvmArgs = ["-javaagent:/path/to/the/dd-java-agent.jar"]
+
 repositories {
     mavenCentral()
     mavenLocal()

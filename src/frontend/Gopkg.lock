@@ -27,6 +27,33 @@
   version = "v0.5.0"
 
 [[projects]]
+  digest = "1:bd285ec20a7450d2272631284de698f2d76e923a458fee90e99cc1db4b97708d"
+  name = "github.com/DataDog/datadog-go"
+  packages = ["statsd"]
+  pruneopts = "UT"
+  revision = "e67964b4021ad3a334e748e8811eb3cd6becbc6e"
+  version = "2.1.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:8d3e421b13b57594b61f29a1ee31398740022ffda05b4806296a3d87582af4bf"
+  name = "github.com/Datadog/opencensus-go-exporter-datadog"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e7c4bd17b329f4ff4e6babc0533de4afcb6bd4c7"
+
+[[projects]]
+  branch = "master"
+  digest = "1:6cbe7676244a1429f4c22601f799d377a70449469ef636f91d992d719b559ff3"
+  name = "github.com/GoogleCloudPlatform/microservices-demo"
+  packages = [
+    "src/frontend/genproto",
+    "src/frontend/money",
+  ]
+  pruneopts = "UT"
+  revision = "9b055cabfbf1f4ed370f1ac17657c5a23bae1681"
+
+[[projects]]
   digest = "1:72856926f8208767b837bf51e3373f49139f61889b67dc7fd3c2a0fd711e3f7a"
   name = "github.com/golang/protobuf"
   packages = [
@@ -85,6 +112,14 @@
   version = "v1.6.2"
 
 [[projects]]
+  digest = "1:5e73b34a27d827212102605789de00bd411b2e434812133c83935fe9897c75e1"
+  name = "github.com/philhofer/fwd"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bb6d471dc95d4fe11e432687f8b70ff496cf3136"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
   name = "github.com/pkg/errors"
   packages = ["."]
@@ -99,6 +134,14 @@
   pruneopts = "UT"
   revision = "3e01752db0189b9157070a0e1668a620f9a85da2"
   version = "v1.0.6"
+
+[[projects]]
+  digest = "1:eaa6698f44de8f2977e93c9b946e60a8af75f565058658aad2df8032b55c84e5"
+  name = "github.com/tinylib/msgp"
+  packages = ["msgp"]
+  pruneopts = "UT"
+  revision = "b2b6a672cf1e5b90748f79b8b81fc8c5cf0571a1"
+  version = "1.0.2"
 
 [[projects]]
   digest = "1:1bb914cfb78f68f488a91cd7872d3d06a5f83c5bbacf0296dbef44e120b00a91"
@@ -298,12 +341,21 @@
   revision = "8dea3dc473e90c8179e519d91302d0597c0ca1d1"
   version = "v1.15.0"
 
+[[projects]]
+  digest = "1:89febd83b5d189b24b8b98a02e97e5e430c398ca374a2e5cfe7ccce0c8f27bd9"
+  name = "gopkg.in/DataDog/dd-trace-go.v1"
+  packages = ["ddtrace/ext"]
+  pruneopts = "UT"
+  revision = "cbae6123912c36ec2aacc8b26d245836debe31fc"
+  version = "v1.4.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
     "cloud.google.com/go/profiler",
     "contrib.go.opencensus.io/exporter/stackdriver",
+    "github.com/Datadog/opencensus-go-exporter-datadog",
     "github.com/GoogleCloudPlatform/microservices-demo/src/frontend/genproto",
     "github.com/GoogleCloudPlatform/microservices-demo/src/frontend/money",
     "github.com/golang/protobuf/proto",

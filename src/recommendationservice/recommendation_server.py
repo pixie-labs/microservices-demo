@@ -30,6 +30,9 @@ from grpc_health.v1 import health_pb2_grpc
 from logger import getJSONLogger
 logger = getJSONLogger('recommendationservice-server')
 
+import opentracing
+from ddtrace.opentracer import Tracer, set_global_tracer
+
 # TODO(morganmclean,ahmetb) tracing currently disabled due to memory leak (see TODO below)
 # from opencensus.trace.ext.grpc import server_interceptor
 # from opencensus.trace.samplers import always_on
@@ -37,7 +40,27 @@ logger = getJSONLogger('recommendationservice-server')
 # from opencensus.trace.exporters import print_exporter
 
 class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
+    def __init__(self):
+        def init_tracer(service_name):
+            """
+            Initialize a new Datadog opentracer and set it as the
+            global tracer.
+
+            This overwrites the opentracing.tracer reference.
+            """
+            config = {
+              'agent_hostname': 'datadog-service',
+              'agent_port': 8126,
+            }
+            tracer = Tracer(service_name, config=config)
+            set_global_tracer(tracer)
+            return tracer
+
+        init_tracer('recommendation-service')
+        super(RecommendationService, self).__init__()
+
     def ListRecommendations(self, request, context):
+        span = opentracing.tracer.start_span('list_recommendations')
         max_responses = 5
         # fetch list of products from product catalog stub
         cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
@@ -53,6 +76,7 @@ class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
         # build and return response
         response = demo_pb2.ListRecommendationsResponse()
         response.product_ids.extend(prod_list)
+        span.finish()
         return response
 
     def Check(self, request, context):

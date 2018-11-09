@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 
+const tracer = require('dd-trace').init({
+  hostname: 'datadog-service',
+  service: 'currencyservice'
+});
+const opentracing = require('opentracing');
+
+opentracing.initGlobalTracer(tracer);
+const opentracer = opentracing.globalTracer();
+
 require('@google-cloud/profiler').start({
   serviceContext: {
     service: 'currencyservice',
@@ -74,6 +83,7 @@ function _loadProto (path) {
  */
 let _data;
 function _getCurrencyData (callback) {
+  const span = opentracer.startSpan('get currrency data');
   if (!_data) {
     logger.info('Fetching currency data...');
     request(DATA_URL, (err, res) => {
@@ -99,6 +109,7 @@ function _getCurrencyData (callback) {
   } else {
     callback(_data);
   }
+  span.finish();
 }
 
 /**
@@ -116,19 +127,23 @@ function _carry (amount) {
  * Lists the supported currencies
  */
 function getSupportedCurrencies (call, callback) {
+  const span = opentracer.startSpan('getting supported currencies');
   logger.info('Getting supported currencies...');
   _getCurrencyData((data) => {
     callback(null, {currency_codes: Object.keys(data)});
   });
+  span.finish();
 }
 
 /**
  * Converts between currencies
  */
 function convert (call, callback) {
+  const span = opentracer.startSpan('currency conversion');
+
   logger.info('received conversion request');
   try {
-    _getCurrencyData((data) => {
+    _getCurrencyData(span, (data) => {
       const request = call.request;
 
       // Convert: from_currency --> EUR
@@ -149,13 +164,16 @@ function convert (call, callback) {
       result.units = Math.floor(result.units);
       result.nanos = Math.floor(result.nanos);
       result.currency_code = request.to_code;
-
+      span.logEvent('conversion request successful');
       logger.info(`conversion request successful`);
+      span.finish();
       callback(null, result);
     });
   } catch (err) {
+    span.logEvent('conversion request failed', err);
     logger.error(`conversion request failed: ${err}`);
     callback(err.message);
+    span.finish();
   }
 }
 
