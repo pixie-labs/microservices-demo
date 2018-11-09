@@ -26,6 +26,15 @@ const logger = pino({
   useLevelLabels: true
 });
 
+const tracer = require('dd-trace').init({
+  hostname: 'datadog-service',
+  service: 'currencyservice'
+});
+const opentracing = require('opentracing');
+
+opentracing.initGlobalTracer(tracer);
+const opentracer = opentracing.globalTracer();
+
 class HipsterShopServer {
   constructor (protoRoot, port = HipsterShopServer.DEFAULT_PORT) {
     this.port = port;
@@ -45,14 +54,17 @@ class HipsterShopServer {
    * @param {*} callback  fn(err, ChargeResponse)
    */
   static ChargeServiceHandler (call, callback) {
+    const span = opentracer.startSpan('handling service charge');
     try {
       logger.info(`PaymentService#Charge invoked with request ${JSON.stringify(call.request)}`);
       const response = charge(call.request);
       callback(null, response);
     } catch (err) {
+      span.logEvent('payment charge failed', err);
       console.warn(err);
       callback(err);
     }
+    span.finish();
   }
 
   static CheckHandler (call, callback) {

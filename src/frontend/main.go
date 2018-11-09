@@ -26,6 +26,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/Datadog/opencensus-go-exporter-datadog"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/plugin/ochttp/propagation/b3"
@@ -142,8 +143,9 @@ func main() {
 	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))
 }
 
-func initStats(log logrus.FieldLogger, exporter *stackdriver.Exporter) {
+func initStats(log logrus.FieldLogger, exporter *stackdriver.Exporter, dd *datadog.Exporter) {
 	view.RegisterExporter(exporter)
+	view.RegisterExporter(dd)
 	if err := view.Register(ochttp.DefaultServerViews...); err != nil {
 		log.Warn("Error registering http default server views")
 	} else {
@@ -159,18 +161,24 @@ func initStats(log logrus.FieldLogger, exporter *stackdriver.Exporter) {
 func initTracing(log logrus.FieldLogger) {
 	// TODO(ahmetb) this method is duplicated in other microservices using Go
 	// since they are not sharing packages.
+	ddTraceAddr := "datadog-service:8126"
+	ddApmAddr := "datadog-service:8125"
+
 	for i := 1; i <= 3; i++ {
 		log = log.WithField("retry", i)
 		exporter, err := stackdriver.NewExporter(stackdriver.Options{})
+		dd := datadog.NewExporter(datadog.Options{TraceAddr: ddTraceAddr, StatsAddr: ddApmAddr, Service: "frontend"})
+
 		if err != nil {
 			log.Warnf("failed to initialize stackdriver exporter: %+v", err)
 		} else {
 			trace.RegisterExporter(exporter)
+			trace.RegisterExporter(dd)
 			trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 			log.Info("registered stackdriver tracing")
 
 			// Register the views to collect server stats.
-			initStats(log, exporter)
+			initStats(log, exporter, dd)
 			return
 		}
 		d := time.Second * 20 * time.Duration(i)
