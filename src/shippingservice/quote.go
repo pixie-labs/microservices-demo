@@ -32,6 +32,10 @@ func (q Quote) String() string {
 
 // CreateQuoteFromCount takes a number of items and returns a Price struct.
 func CreateQuoteFromCount(count int) Quote {
+	// Special deal: $0.99 shipping if purchasing 10 or more items!
+	if (count >= 10) {
+		return Quote{0, 99}
+	}
 	return CreateQuoteFromFloat(quoteByCountFloat(count))
 }
 
