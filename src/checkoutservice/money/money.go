@@ -16,6 +16,7 @@ package money
 
 import (
 	"errors"
+	"fmt"
 
 	pb "github.com/GoogleCloudPlatform/microservices-demo/src/checkoutservice/genproto"
 )
@@ -87,12 +88,25 @@ func Must(v pb.Money, err error) pb.Money {
 	return v
 }
 
+const (
+	InvalidValue = 13
+	Other        = -1
+)
+
+type internalError struct {
+	code int
+}
+
+func (e internalError) Error() string {
+	return fmt.Sprintf("%s code: %d", ErrInvalidValue, e.code)
+}
+
 // Sum adds two values. Returns an error if one of the values are invalid or
 // currency codes are not matching (unless currency code is unspecified for
 // both).
 func Sum(l, r pb.Money) (pb.Money, error) {
 	if !IsValid(l) || !IsValid(r) {
-		return pb.Money{}, ErrInvalidValue
+		return pb.Money{}, internalError{InvalidValue}
 	} else if l.GetCurrencyCode() != r.GetCurrencyCode() {
 		return pb.Money{}, ErrMismatchingCurrency
 	}

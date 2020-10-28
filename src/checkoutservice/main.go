@@ -234,7 +234,12 @@ func (cs *checkoutService) PlaceOrder(ctx context.Context, req *pb.PlaceOrderReq
 	total = money.Must(money.Sum(total, *prep.shippingCostLocalized))
 	for _, it := range prep.orderItems {
 		multPrice := money.MultiplySlow(*it.Cost, uint32(it.GetItem().GetQuantity()))
-		total = money.Must(money.Sum(total, multPrice))
+		value, err := money.Sum(total, multPrice)
+		if err != nil {
+			log.Infof("[PlaceOrder] err=%v", err)
+			return nil, err
+		}
+		total = value
 	}
 
 	txID, err := cs.chargeCard(ctx, &total, req.CreditCard)
