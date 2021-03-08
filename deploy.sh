@@ -26,7 +26,7 @@ if [[ "$redis_sharding" == true ]]; then
     echo "Redis shards do not come ready after ${timeout}, exit ..."
     exit 1
   fi
-  redis_cart_ips=$(kubectl get pods --namespace="$namespace" -l app=redis-cart \
+  redis_cart_ips=$(kubectl get pods --namespace="${namespace}" -l app=redis-cart \
                    -o jsonpath='{range.items[*]}{.status.podIP}:6379 ')
   kubectl exec --namespace="${namespace}" -it redis-cart-0 -- redis-cli --cluster create \
     --cluster-replicas 1 ${redis_cart_ips} --cluster-yes
