@@ -30,6 +30,7 @@ import (
 
 	pb "github.com/GoogleCloudPlatform/microservices-demo/src/productcatalogservice/genproto"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	proto "github.com/golang/protobuf/proto"
 
 	"cloud.google.com/go/profiler"
 	"contrib.go.opencensus.io/exporter/jaeger"
@@ -245,6 +246,7 @@ func readCatalogFile(catalog *pb.ListProductsResponse) error {
 		return err
 	}
 	log.Info("successfully parsed product catalog json")
+	log.Info(proto.MarshalTextString(catalog))
 	return nil
 }
 
@@ -275,8 +277,9 @@ func (p *productCatalog) GetProduct(ctx context.Context, req *pb.GetProductReque
 	time.Sleep(extraLatency)
 	var found *pb.Product
 	for i := 0; i < len(parseCatalog()); i++ {
-		if req.Id == parseCatalog()[i].Id {
-			found = parseCatalog()[i]
+		product := parseCatalog()[i];
+		if product != nil && req.Id == product.Id {
+			found = product
 		}
 	}
 	if found == nil {
